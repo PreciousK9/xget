@@ -174,6 +174,7 @@ export const PLATFORMS = {
   fdroid: 'https://f-droid.org',
   jenkins: 'https://updates.jenkins.io',
   anyrouter: 'https://anyrouter.top', 
+  cspok: 'https://c.cspok.cn', 
 
   // AI Inference Providers
   'ip-openai': 'https://api.openai.com',
