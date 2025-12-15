@@ -169,6 +169,25 @@ async function handleRequest(request, env, ctx) {
                 }
 
                 if (!response) {
+                  // Clone request body for retry support (ReadableStream can only be read once)
+                  let bodyBuffer = null;
+                  if (
+                    ['POST', 'PUT', 'PATCH'].includes(request.method) &&
+                    (isGit || isGitLFS || isDocker || isAI)
+                  ) {
+                    try {
+                      bodyBuffer = await request.arrayBuffer();
+                    } catch (error) {
+                      console.error('Failed to read request body:', error);
+                      response = createErrorResponse('Failed to process request body', 400);
+                    }
+                  }
+
+                  if (response) {
+                    // Early return if body reading failed
+                    return response;
+                  }
+
                   /** @type {RequestInit} */
                   const fetchOptions = {
                     method: request.method,
@@ -177,11 +196,8 @@ async function handleRequest(request, env, ctx) {
                   };
 
                   // Add body for POST/PUT/PATCH requests (Git/Docker/AI inference operations)
-                  if (
-                    ['POST', 'PUT', 'PATCH'].includes(request.method) &&
-                    (isGit || isGitLFS || isDocker || isAI)
-                  ) {
-                    fetchOptions.body = request.body;
+                  if (bodyBuffer) {
+                    fetchOptions.body = bodyBuffer;
                   }
 
                   // Cast headers to Headers for proper typing
@@ -610,3 +626,4 @@ export default {
     return handleRequest(request, env, ctx);
   }
 };
+
